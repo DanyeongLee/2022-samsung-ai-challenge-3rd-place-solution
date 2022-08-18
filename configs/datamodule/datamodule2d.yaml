@@ -1,0 +1,19 @@
+_target_: src.datamodules.datamodule2d.BaseDataModule
+
+train_data:
+  _target_: src.datamodules.components.dataset2d.TrainDataset
+  root: "/data/project/danyoung/reorg/data/mol_files"
+  transform: null
+  pre_transform: null
+  pre_filter: null
+test_data:
+  _target_: src.datamodules.components.dataset2d.TestDataset
+  root: "/data/project/danyoung/reorg/data/mol_files"
+  transform: null
+  pre_transform: null
+  pre_filter: null
+  
+batch_size: 32
+num_workers: 4
+fold: 0
+

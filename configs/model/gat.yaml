@@ -1,0 +1,15 @@
+_target_: src.models.model.BaseNet
+
+lr: 0.001
+weight_decay: 0.0
+
+net:
+  _target_: src.models.components.gat.GATNet
+  input_dim: 15
+  gat_hidden_dim: 64
+  edge_dim: 3
+  heads: 4
+  n_gat_layers: 3
+  n_fc_layers: 3
+  fc_hidden_dim: 256
+  fc_dropout: 0.5
