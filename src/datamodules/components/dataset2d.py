@@ -4,6 +4,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.rdmolops import GetAdjacencyMatrix
+from rdkit.Chem.rdMolTransforms import GetBondLength, GetAngleRad
 
 from tqdm import tqdm
 
@@ -27,7 +28,8 @@ def mol2graph(mol):
     :input: SMILES string (str)
     :return: graph object
     """
-
+    conf = mol.GetConformer()
+    
     # atoms
     atom_features_list = []
     for atom in mol.GetAtoms():
@@ -39,29 +41,50 @@ def mol2graph(mol):
     if len(mol.GetBonds()) > 0: # mol has bonds
         edges_list = []
         edge_features_list = []
-        for bond in mol.GetBonds():
+        edge_lengths_list = []
+        
+        for bond_idx, bond in enumerate(mol.GetBonds()):
             i = bond.GetBeginAtomIdx()
             j = bond.GetEndAtomIdx()
 
             edge_feature = bond_to_feature_vector(bond)
+            edge_length = GetBondLength(conf, i, j)
 
             # add edges in both directions
             edges_list.append((i, j))
             edge_features_list.append(edge_feature)
+            edge_lengths_list.append(edge_length)
+            
             edges_list.append((j, i))
             edge_features_list.append(edge_feature)
+            edge_lengths_list.append(edge_length)
+            
+        bond_bond_list = []
+        bond_bond_angles_list = []
+            
+        for edge_idx, edge in enumerate(edges_list):
+            i, j = edge
+            for another_edge_idx, another_edge in enumerate(edges_list):
+                if j == another_edge[0]:  # connected
+                    bond_bond_list.append((edge_idx, another_edge_idx))
+                    bond_bond_angles_list.append(GetAngleRad(conf, i, j, another_edge[1]))
+                    
 
         # data.edge_index: Graph connectivity in COO format with shape [2, num_edges]
         edge_index = np.array(edges_list, dtype = np.int64).T
 
         # data.edge_attr: Edge feature matrix with shape [num_edges, num_edge_features]
         edge_attr = np.array(edge_features_list, dtype = np.int64)
+        bond_lengths = np.array(edge_lengths_list, dtype=np.float32)
+        
+        bond_bond_index = np.array(bond_bond_list, dtype=np.int64).T
+        bond_bond_angles = np.array(bond_bond_angles_list, dtype=np.float32)
 
     else:   # mol has no bonds
         edge_index = np.empty((2, 0), dtype = np.int64)
         edge_attr = np.empty((0, num_bond_features), dtype = np.int64)
 
-    return x, edge_attr, edge_index
+    return x, edge_attr, edge_index, bond_lengths, bond_bond_index, bond_bond_angles
 
 
 def get_coordinate_features(mol):
@@ -78,20 +101,35 @@ def get_mol_data(root, prefix, y=None):
     g = Chem.MolFromMolFile(f"{root}/{set_dir}/{prefix}_g.mol", removeHs=False)
     
     # Atom features
-    X, edge_attr, edge_index = mol2graph(ex)
+    X, edge_attr, edge_index, bond_lengths_ex, bond_bond_index, bond_bond_angles_ex = mol2graph(ex)
+    X, edge_attr, edge_index, bond_lengths_g, bond_bond_index, bond_bond_angles_g = mol2graph(g)
+    
+    bond_lengths_ex = torch.tensor(bond_lengths_ex, dtype=torch.float)
+    bond_lengths_g = torch.tensor(bond_lengths_g, dtype=torch.float)
+    
+    bond_bond_index = torch.tensor(bond_bond_index, dtype=torch.long)
+    
+    bond_bond_angles_ex = torch.tensor(bond_bond_angles_ex, dtype=torch.float)
+    bond_bond_angles_g = torch.tensor(bond_bond_angles_g, dtype=torch.float)
     
     # Atom 3D coordinates
     co_ex = get_coordinate_features(ex)
     co_g = get_coordinate_features(g)
-            
-    X = np.concatenate([X, co_ex, co_g], axis=1)
     
     X = torch.tensor(X, dtype=torch.float)
+    co_ex = torch.tensor(co_ex, dtype=torch.float)
+    co_g = torch.tensor(co_g, dtype=torch.float)
+    
     edge_index = torch.tensor(edge_index, dtype=torch.long)
     edge_attr = torch.tensor(edge_attr, dtype=torch.float)
     y = torch.tensor([y], dtype=torch.float)
             
-    return Data(x=X, edge_index=edge_index, edge_attr=edge_attr, y=y)
+    return Data(x=X, pos_g=co_g, pos_ex=co_ex, 
+                edge_index=edge_index, edge_attr=edge_attr, 
+                bond_lengths_ex=bond_lengths_ex, bond_lengths_g=bond_lengths_g,
+                bond_bond_index=bond_bond_index, 
+                bond_bond_angles_ex=bond_bond_angles_ex, bond_bond_angles_g=bond_bond_angles_g,
+                y=y)
         
 
 def get_datalist(df, root):

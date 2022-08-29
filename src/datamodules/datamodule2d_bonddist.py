@@ -1,8 +1,28 @@
 from typing import Union
+import torch
 import pytorch_lightning as pl
 import torch_geometric.transforms as T
 from torch_geometric.loader import DataLoader
 from sklearn.model_selection import KFold
+from sklearn.metrics.pairwise import euclidean_distances
+import torch_geometric.transforms as T
+from torch_geometric.utils import add_self_loops, dense_to_sparse
+
+
+
+class DistanceEdge(T.BaseTransform):
+    def __call__(self, data):
+        pd_g = torch.tensor(euclidean_distances(data.pos_g), dtype=torch.float)
+        pd_g.fill_diagonal_(1)
+        pd_g = 1 / pd_g
+        data.full_edge_index, data.distance_edge_attr_g = dense_to_sparse(pd_g)
+
+        pd_ex = torch.tensor(euclidean_distances(data.pos_ex), dtype=torch.float)
+        pd_ex.fill_diagonal_(1)
+        pd_ex = 1 / pd_ex
+        _, data.distance_edge_attr_ex = dense_to_sparse(pd_ex)
+        
+        return data
 
 
 class BaseDataModule(pl.LightningDataModule):
@@ -25,6 +45,7 @@ class BaseDataModule(pl.LightningDataModule):
         transform = []
         if virtual_node:
             transform.append(T.VirtualNode())
+        transform.append(DistanceEdge())
         transform = T.Compose(transform)
         
         self.full_data = TrainDataset(transform=transform)
@@ -50,8 +71,7 @@ class BaseDataModule(pl.LightningDataModule):
             num_workers=self.hparams.num_workers,
             shuffle=True,
             drop_last=True,
-            pin_memory=True,
-            follow_batch=["edge_attr"]
+            pin_memory=True
         )
     
     def val_dataloader(self):
@@ -62,8 +82,7 @@ class BaseDataModule(pl.LightningDataModule):
                 num_workers=self.hparams.num_workers,
                 shuffle=False,
                 drop_last=False,
-                pin_memory=True,
-                follow_batch=["edge_attr"]
+                pin_memory=True
             )
         else:
             return None
@@ -75,6 +94,5 @@ class BaseDataModule(pl.LightningDataModule):
             num_workers=self.hparams.num_workers,
             shuffle=False,
             drop_last=False,
-            pin_memory=True,
-            follow_batch=["edge_attr"]
+            pin_memory=True
         )

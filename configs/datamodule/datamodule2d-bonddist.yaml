@@ -1,4 +1,4 @@
-_target_: src.datamodules.datamodule2d.BaseDataModule
+_target_: src.datamodules.datamodule2d_bonddist.BaseDataModule
   
 batch_size: 32
 num_workers: 4
