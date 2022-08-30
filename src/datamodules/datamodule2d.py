@@ -41,7 +41,12 @@ class BaseDataModule(pl.LightningDataModule):
                 self.val_data = self.full_data.copy(val_idx)
                 
             else:
+                kfold = KFold(n_splits=5, shuffle=True, random_state=123456789)
+                for i, (train_idx, val_idx) in enumerate(kfold.split(self.full_data)):
+                    if i == 0:
+                        break
                 self.train_data = self.full_data
+                self.val_data = self.full_data.copy(val_idx)  # Dummy val data
         
     def train_dataloader(self):
         return DataLoader(
@@ -55,18 +60,15 @@ class BaseDataModule(pl.LightningDataModule):
         )
     
     def val_dataloader(self):
-        if type(self.hparams.fold) != str:
-            return DataLoader(
-                dataset=self.val_data, 
-                batch_size=self.hparams.batch_size,
-                num_workers=self.hparams.num_workers,
-                shuffle=False,
-                drop_last=False,
-                pin_memory=True,
-                follow_batch=["edge_attr"]
-            )
-        else:
-            return None
+        return DataLoader(
+            dataset=self.val_data, 
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            shuffle=False,
+            drop_last=False,
+            pin_memory=True,
+            follow_batch=["edge_attr"]
+        )
     
     def predict_dataloader(self):
         return DataLoader(

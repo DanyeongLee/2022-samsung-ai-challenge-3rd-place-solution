@@ -2,6 +2,8 @@ _target_: src.models.gem_model.BaseNet
 
 lr: 1e-3
 weight_decay: 1e-4
+optimizer: "adamw"
+loss_fn: "mse"
 
 encoder:
   _target_: src.models.components.gem1.GEM1

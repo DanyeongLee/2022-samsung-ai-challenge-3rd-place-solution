@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import pytorch_lightning as pl
 from torchmetrics import MeanSquaredError, MinMetric
 
@@ -13,14 +14,29 @@ class BaseNet(pl.LightningModule):
         classifier: nn.Module,
         lr: float = 1e-3,
         weight_decay: float = 1e-5,
-        max_epochs: int = 30
+        max_epochs: int = 30,
+        optimizer: str = "adamw",
+        loss_fn: str = "mse"
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["encoder", "classifier"])
         self.encoder = encoder
         self.classifier = classifier
-        self.criterion = nn.MSELoss()
         
+        if loss_fn == "mse":
+            self.criterion = nn.MSELoss()
+        elif loss_fn == "mae":
+            self.criterion = nn.L1Loss()
+        elif loss_fn == "huber":
+            self.criterion = nn.HuberLoss()
+        elif loss_fn == "rmse":
+            self.criterion = lambda pred, target: torch.sqrt(F.mse_loss(pred, target))
+            
+        if optimizer == "adamw":
+            self.optim = torch.optim.AdamW
+        elif optimizer == "adam":
+            self.optim = torch.optim.Adam
+            
         self.train_rmse = MeanSquaredError(squared=False)
         self.val_rmse = MeanSquaredError(squared=False)
         
@@ -80,7 +96,7 @@ class BaseNet(pl.LightningModule):
     def configure_optimizers(self):
         n_steps = len(self.trainer._data_connector._train_dataloader_source.dataloader())
         
-        optimizer = torch.optim.AdamW(
+        optimizer = self.optim(
             self.parameters(), 
             lr=self.hparams.lr, 
             weight_decay=self.hparams.weight_decay
