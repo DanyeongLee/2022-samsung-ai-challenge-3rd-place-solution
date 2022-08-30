@@ -1,0 +1,55 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /datamodule: datamodule2d.yaml
+  - override /model: gem1.yaml
+  - override /callbacks: default.yaml
+  - override /trainer: default.yaml
+  - override /logger: wandb.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+tags: ["GEM1", "Gradient Clipping"]
+
+name: "gem1-opt"
+
+seed: 42
+
+trainer:
+  max_epochs: 120
+  gradient_clip_val: 1.
+
+model:
+  lr: 7e-3
+  weight_decay: 1e-3
+  max_epochs: ${trainer.max_epochs}
+  optimizer: "adamw"
+  encoder:
+    _target_: src.models.components.gem1.GEM1
+    embed_dim: 128
+    dropout: 0.25
+    last_act: True
+    n_layers: 5
+    pool: "mean"
+
+  classifier:
+    _target_: src.models.components.gem1.Classifier
+    input_dim: ${model.encoder.embed_dim}
+    hidden_dims: [1024, 256]
+    batch_norm: True
+    dropout: 0.4
+
+datamodule:
+  batch_size: 128
+  fold: 0
+
+logger:
+  wandb:
+    tags: ${tags}
+    group: ${name}
+    name: ${name}_fold${datamodule.fold}
+    

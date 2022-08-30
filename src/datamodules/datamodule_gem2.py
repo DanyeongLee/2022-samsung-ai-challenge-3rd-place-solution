@@ -10,7 +10,7 @@ from torch_geometric import transforms as T
 class ToOneHot(T.BaseTransform):
     def __init__(self):
         super().__init__()
-    
+        
     def _to_one_hot(self, idx, n_max):
         vec = torch.zeros(n_max, dtype=torch.float32)
         vec[int(idx)] = 1.
@@ -19,13 +19,13 @@ class ToOneHot(T.BaseTransform):
 
     def _atom2onehot(self, atom):
         atom_type = self._to_one_hot(atom[0], 119)
-        aromaticity = self._to_one_hot(atom[7], 2)
+        aromaticity = self._to_one_hot(atom[6], 2)
         formal_charge = self._to_one_hot(atom[3], 16)
         chirality_tag = self._to_one_hot(atom[1], 4)
         degree = self._to_one_hot(atom[2], 11)
         n_H = self._to_one_hot(atom[4], 9)
-        hybridization = self._to_one_hot(atom[6], 6)
-        in_ring = self._to_one_hot(atom[8], 2)
+        hybridization = self._to_one_hot(atom[5], 6)
+        in_ring = self._to_one_hot(atom[7], 2)
 
         one_hot_vec = torch.cat([atom_type, aromaticity, formal_charge, 
                                  chirality_tag, degree, n_H, hybridization, in_ring])
@@ -36,8 +36,10 @@ class ToOneHot(T.BaseTransform):
         bond_type = self._to_one_hot(bond[0], 4)
         stereo = self._to_one_hot(bond[1], 6)
         conjugated = self._to_one_hot(bond[2], 2)
+        in_ring = self._to_one_hot(bond[3], 2)
+        bond_dir = self._to_one_hot(bond[4], 7)
 
-        one_hot_vec = torch.cat([bond_type, stereo, conjugated])
+        one_hot_vec = torch.cat([bond_type, stereo, conjugated, in_ring, bond_dir])
 
         return one_hot_vec
     
@@ -65,10 +67,7 @@ class BaseDataModule(pl.LightningDataModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
         
-        if fingerprints:
-            from src.datamodules.components.dataset2d_fp import TrainDataset, TestDataset
-        else:
-            from src.datamodules.components.dataset2d import TrainDataset, TestDataset
+        from src.datamodules.components.dataset_gem2 import TrainDataset, TestDataset
             
         transform = []
         if virtual_node:

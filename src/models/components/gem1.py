@@ -161,7 +161,7 @@ class GEM1(nn.Module):
         return x
     
     
-class GEM1_coo(nn.Module):
+class GEM1_onehot(nn.Module):
     def __init__(
         self,
         embed_dim: int = 32,
@@ -171,8 +171,8 @@ class GEM1_coo(nn.Module):
         pool: str = "mean"
     ):
         super().__init__()
-        self.embed_atom = nn.Linear(15, embed_dim)
-        self.embed_bond = nn.Linear(3, embed_dim)
+        self.embed_atom = nn.Linear(169, embed_dim)
+        self.embed_bond = nn.Linear(12, embed_dim)
         self.embed_bond_length = BondLengthRBF(embed_dim)
         self.embed_bond_angle = BondAngleRBF(embed_dim)
         
@@ -188,8 +188,7 @@ class GEM1_coo(nn.Module):
         
         
     def forward(self, batch):
-        x = torch.cat([batch.x, batch.pos_g, batch.pos_ex], axis=1)
-        atom_x = self.embed_atom(x)
+        atom_x = self.embed_atom(batch.x)
         
         edge_x = self.embed_bond(batch.edge_attr)
         edge_x = edge_x + self.embed_bond_length(batch.bond_lengths_g) + self.embed_bond_length(batch.bond_lengths_ex)
@@ -206,6 +205,53 @@ class GEM1_coo(nn.Module):
         x = self.pool(atom_x, batch.batch)
         
         return x
+    
+
+class GEM1_gem2data(nn.Module):
+    def __init__(
+        self,
+        embed_dim: int = 32,
+        dropout: float = 0.1,
+        last_act: bool = True,
+        n_layers: int = 3,
+        pool: str = "mean"
+    ):
+        super().__init__()
+        self.embed_atom = nn.Linear(169, embed_dim)
+        self.embed_bond = nn.Linear(21, embed_dim)
+        self.embed_bond_length = BondLengthRBF(embed_dim)
+        self.embed_bond_angle = BondAngleRBF(embed_dim)
+        
+        self.atom_gin_layers = nn.ModuleList([GINBlock(embed_dim, dropout, last_act) for _ in range(n_layers)])
+        self.bond_gin_layers = nn.ModuleList([GINBlock(embed_dim, dropout, last_act) for _ in range(n_layers)])
+        
+        if pool == "mean":
+            self.pool = gnn.global_mean_pool
+        elif pool == "add":
+            self.pool = gnn.global_add_pool
+        
+        self.n_layers = n_layers
+        
+        
+    def forward(self, batch):
+        atom_x = self.embed_atom(batch.x)
+        
+        edge_x = self.embed_bond(batch.edge_attr)
+        edge_x = edge_x + self.embed_bond_length(batch.bond_lengths_g) + self.embed_bond_length(batch.bond_lengths_ex)
+        
+        angle_x = self.embed_bond_angle(batch.bond_bond_angles_g) + self.embed_bond_angle(batch.bond_bond_angles_ex)
+        
+        for layer_idx in range(self.n_layers):
+            bond_gin = self.bond_gin_layers[layer_idx]
+            edge_x = bond_gin(edge_x, batch.bond_bond_index, angle_x, batch.edge_attr_batch)
+            
+            atom_gin = self.atom_gin_layers[layer_idx]
+            atom_x = atom_gin(atom_x, batch.edge_index, edge_x, batch.batch)
+        
+        x = self.pool(atom_x, batch.batch)
+        
+        return x
+    
     
 
 class Classifier(nn.Module):

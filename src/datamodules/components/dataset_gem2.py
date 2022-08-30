@@ -18,8 +18,55 @@ from torch_geometric.data import Data
 from torch_geometric.data import InMemoryDataset
 
 
-from ogb.utils.features import (allowable_features, atom_to_feature_vector,
- bond_to_feature_vector, atom_feature_vector_to_dict, bond_feature_vector_to_dict) 
+from ogb.utils.features import allowable_features
+
+
+def safe_index(l, e):
+    """
+    Return index of element e in list l. If e is not present, return the last index
+    """
+    try:
+        return l.index(e)
+    except:
+        return len(l) - 1
+    
+def atom_to_feature_vector(atom):
+    """
+    Converts rdkit atom object to feature list of indices
+    :param mol: rdkit atom object
+    :return: list
+    """
+    atom_feature = [
+            safe_index(allowable_features['possible_atomic_num_list'], atom.GetAtomicNum()),
+            allowable_features['possible_chirality_list'].index(str(atom.GetChiralTag())),
+            safe_index(allowable_features['possible_degree_list'], atom.GetTotalDegree()),
+            safe_index(allowable_features['possible_formal_charge_list'], atom.GetFormalCharge()),
+            safe_index(allowable_features['possible_numH_list'], atom.GetTotalNumHs()),
+            safe_index(allowable_features['possible_hybridization_list'], str(atom.GetHybridization())),
+            allowable_features['possible_is_aromatic_list'].index(atom.GetIsAromatic()),
+            allowable_features['possible_is_in_ring_list'].index(atom.IsInRing()),
+            ]
+    return atom_feature
+
+
+bond_dir_list = ["NONE", "BEGINWEDGE", "BEGINDASH", "ENDDOWNRIGHT", "ENDUPRIGHT", "EITHERDOUBLE", "UNKNOWN"]
+
+
+def bond_to_feature_vector(bond):
+    """
+    Converts rdkit bond object to feature list of indices
+    :param mol: rdkit bond object
+    :return: list
+    """
+    bond_feature = [
+                safe_index(allowable_features['possible_bond_type_list'], str(bond.GetBondType())),
+                allowable_features['possible_bond_stereo_list'].index(str(bond.GetStereo())),
+                allowable_features['possible_is_conjugated_list'].index(bond.GetIsConjugated()),
+                allowable_features['possible_is_in_ring_list'].index(bond.IsInRing()),
+                bond_dir_list.index(str(bond.GetBondDir()))
+            ]
+    
+    return bond_feature
 
 
 def mol2graph(mol):
@@ -171,9 +218,9 @@ class TrainDataset(InMemoryDataset):
     @property
     def processed_file_names(self):
         if self.removeHs:
-            return ["dataset_train.pt"]
+            return ["gem2_dataset_train.pt"]
         else:
-            return ["dataset_H_train.pt"]
+            return ["gem2_dataset_H_train.pt"]
 
     def process(self):
         # Read data into huge `Data` list.
@@ -213,9 +260,9 @@ class TestDataset(InMemoryDataset):
     @property
     def processed_file_names(self):
         if self.removeHs:
-            return ["dataset_test.pt"]
+            return ["gem2_dataset_test.pt"]
         else:
-            return ["dataset_H_test.pt"]
+            return ["gem2_dataset_H_test.pt"]
 
     def process(self):
         # Read data into huge `Data` list.
