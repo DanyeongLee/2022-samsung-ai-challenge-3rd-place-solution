@@ -8,8 +8,8 @@ ______________________________________________________________________
 </div>
 
 
-# Team Members
+## Team Members
 구정현, 이단영, 김상엽
 
-# Solution Overview
+## Solution Overview
 (WIP)
