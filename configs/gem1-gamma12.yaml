@@ -1,0 +1,29 @@
+model:
+  embed_dim: 300
+  encoder_dropout: 0.15
+  last_act: False
+  n_convs: 5
+  pool: "add"
+  dist_max: 3.0
+  dist_unit: 0.05
+  gamma: 12.
+  mlp_hidden_dims: [256, 256, 256]
+  batch_norm: True
+  mlp_dropout: 0.2
+
+dataset:
+  root: 'data/mol_files'
+  batch_size: 64
+  num_workers: 4
+  pin_memory: true
+
+train:
+  n_epochs: 110
+  lr: 0.005074664334553295
+  weight_decay: 0.005039461530109865
+  patience: 15
+  grad_clip: 0.5
+
+logger:
+  entity: null
+  project: "2022-samsung-ai-challenge"

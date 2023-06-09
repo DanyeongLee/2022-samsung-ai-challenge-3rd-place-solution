@@ -1,8 +1,0 @@
-_target_: src.datamodules.datamodule2d.BaseDataModule
-  
-batch_size: 32
-num_workers: 4
-fold: 0
-virtual_node: False
-fingerprints: False
-
