@@ -3,7 +3,8 @@ ______________________________________________________________________
 <div align="center">
 
 # 2022 Samsung AI Challenge (Materials Discovery)
-3rd Place Solution (Team cgu)
+3rd Place Solution (Team cgu)  
+[presentation](/imgs/dacon_samsung2022_cgu.pdf)
 
 </div>
 
@@ -12,7 +13,10 @@ ______________________________________________________________________
 구정현, 이단영, 김상엽
 
 ## Solution Overview
-(wip)
+![overview](/imgs/model_structure.png)
+
+- We adopted GeoGNN architecture from [Fang et al., 2022](https://www.nature.com/articles/s42256-021-00438-4) as a base molecule encoder.
+- We revised GeoGNN to appropriately model the "difference" between two energy states of molecules.
 
 
 ## Running
