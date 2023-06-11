@@ -36,6 +36,6 @@ python train.py configs/gem1.yaml
 ```
 bash run.sh
 ```
-- Running above command will run 10-fold CV of total 12 models (4 different hyperparameters, 3 different seeds).
+- Running above command will run 10-fold CV of total 12 models (4 different hyperparameters, 3 different seeds). This may take a long time.
 - If it ran well, prediction files (csv) on validation set of each fold and test set would have been created.
 - By running codes in 'stack_ensemble.ipynb', you can train xgboost models on stacked dataset and generate the ensembled submission file ('outputs/ensembled_submission.csv').
