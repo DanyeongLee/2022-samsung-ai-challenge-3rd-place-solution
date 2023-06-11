@@ -13,7 +13,7 @@ ______________________________________________________________________
 구정현, 이단영, 김상엽
 
 ## Solution Overview
-![overview](/imgs/model_structure.png)
+![overview](/imgs/structure.png)
 
 - We adopted GeoGNN architecture from [Fang et al., 2022](https://www.nature.com/articles/s42256-021-00438-4) as a base molecule encoder.
 - We revised GeoGNN to appropriately model the "difference" between two energy states of molecules.
