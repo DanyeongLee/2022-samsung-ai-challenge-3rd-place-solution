@@ -28,10 +28,14 @@ ______________________________________________________________________
 ```
 python train.py configs/gem1.yaml 
 ```
-- You can train your model using default hyperparameters we used in competition with above command.  
+- You can train your model using default hyperparameters we used in this competition with above command.  
 - Trained model checkpoints and submission files (test_preds.csv) will be saved in 'outputs' directory. You can directly submit the csv file.
 - Just a single model achieved high performance (private LB score: 0.65 ~ 0.7), but for further improvement, we used stacking ensemble.
 
 ### Stacking ensemble
-(wip)
-
+```
+bash run.sh
+```
+- Running above command will run 10-fold CV of total 12 models (4 different hyperparameters, 3 different seeds).
+- If it ran well, prediction files (csv) on validation set of each fold and test set would have been created.
+- By running codes in 'stack_ensemble.ipynb', you can train xgboost models on stacked dataset and generate the ensembled submission file ('outputs/ensembled_submission.csv').
