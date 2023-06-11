@@ -13,7 +13,7 @@ ______________________________________________________________________
 구정현, 이단영, 김상엽
 
 ## Solution Overview
-![overview](/imgs/model_structure.png)
+![overview](/imgs/structure.png)
 
 - We adopted GeoGNN architecture from [Fang et al., 2022](https://www.nature.com/articles/s42256-021-00438-4) as a base molecule encoder.
 - We revised GeoGNN to appropriately model the "difference" between two energy states of molecules.
@@ -30,7 +30,7 @@ python train.py configs/gem1.yaml
 ```
 - You can train your model using default hyperparameters we used in competition with above command.  
 - Trained model checkpoints and submission files (test_preds.csv) will be saved in 'outputs' directory. You can directly submit the csv file.
-- Just a single model achieved high performance (public score: 0.65 ~ 0.7), but for further improvement, we used stacking ensemble.
+- Just a single model achieved high performance (private LB score: 0.65 ~ 0.7), but for further improvement, we used stacking ensemble.
 
 ### Stacking ensemble
 (wip)
