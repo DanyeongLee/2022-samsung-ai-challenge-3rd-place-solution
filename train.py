@@ -139,7 +139,7 @@ def main(args):
     train_df = pd.read_csv('data/train_set.ReorgE.csv')
     val_df = train_df.iloc[val_idx]
     val_df['Reorg_g_pred'] = val_preds[:, 0]
-    val_df['Reorg_h_pred'] = val_preds[:, 1]
+    val_df['Reorg_ex_pred'] = val_preds[:, 1]
     val_df.to_csv(f'outputs/{config_name}/fold{args.fold}/seed{args.seed}/val_preds.csv', index=False)
 
     test_preds = test(model, test_loader, device)
