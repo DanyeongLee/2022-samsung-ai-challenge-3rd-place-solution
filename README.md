@@ -20,11 +20,11 @@ ______________________________________________________________________
 
 
 ## Running
-### Download dataset
+### Downloading dataset
 - Training and test data can be downloaded from [2022 Samsung AI Challenge (Materials Discovery)](https://dacon.io/competitions/official/235953/data).  
 - We assume that you appropriately downloaded the dataset into 'data' directory.
 
-### Train single model
+### Training single model
 ```
 python train.py configs/gem1.yaml 
 ```
